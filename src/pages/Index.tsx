@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import { Hero } from "@/components/Hero";
 import { Navbar } from "@/components/Navbar";
 import { SellerCard } from "@/components/SellerCard";
@@ -37,6 +38,7 @@ const Index = () => {
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
   const [sortBy, setSortBy] = useState("price");
+  const navigate = useNavigate();
   const { toast } = useToast();
 
   useEffect(() => {
@@ -93,11 +95,7 @@ const Index = () => {
       });
       return;
     }
-    // TODO: Navigate to purchase flow
-    toast({
-      title: "Em breve",
-      description: "Sistema de compra será implementado em breve",
-    });
+    navigate(`/purchase/${sellerId}`);
   };
 
   const filteredSellers = sellers
