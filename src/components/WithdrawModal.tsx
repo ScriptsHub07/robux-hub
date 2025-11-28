@@ -156,6 +156,23 @@ export function WithdrawModal({ open, onOpenChange, onSuccess, maxAmount }: With
             Solicitar Saque
           </Button>
 
+          {amount && parseFloat(amount) >= 10 && (
+            <div className="p-3 bg-muted rounded-lg text-sm space-y-1">
+              <div className="flex justify-between">
+                <span>Valor solicitado:</span>
+                <span>R$ {parseFloat(amount).toFixed(2)}</span>
+              </div>
+              <div className="flex justify-between text-destructive">
+                <span>Taxa (5%):</span>
+                <span>- R$ {(parseFloat(amount) * 0.05).toFixed(2)}</span>
+              </div>
+              <div className="flex justify-between font-semibold border-t pt-1">
+                <span>Você receberá:</span>
+                <span>R$ {(parseFloat(amount) * 0.95).toFixed(2)}</span>
+              </div>
+            </div>
+          )}
+
           <p className="text-xs text-center text-muted-foreground">
             O saque será processado em até 24 horas úteis
           </p>

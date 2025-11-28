@@ -45,6 +45,10 @@ serve(async (req) => {
       throw new Error("Valor mínimo para saque é R$ 10,00");
     }
 
+    // Calculate 5% admin fee
+    const adminFee = amount * 0.05;
+    const netAmount = amount - adminFee;
+
     // Check if user is a seller
     const { data: seller } = await supabaseClient
       .from("sellers")
@@ -67,14 +71,22 @@ serve(async (req) => {
       throw new Error("Saldo insuficiente");
     }
 
-    // Create withdrawal record
+    // Get admin user (first user with admin role)
+    const { data: adminRole } = await supabaseClient
+      .from("user_roles")
+      .select("user_id")
+      .eq("role", "admin")
+      .limit(1)
+      .single();
+
+    // Create withdrawal record (with net amount after fee)
     const { data: withdrawal, error: withdrawalError } = await supabaseClient
       .from("withdrawals")
       .insert({
         seller_id: seller.id,
-        amount,
+        amount: netAmount,
         payment_method: "PIX",
-        payment_details: { pixKey, pixKeyType },
+        payment_details: { pixKey, pixKeyType, originalAmount: amount, adminFee },
         status: "pending",
       })
       .select()
@@ -84,19 +96,44 @@ serve(async (req) => {
       throw new Error("Falha ao criar solicitação de saque");
     }
 
-    // Deduct balance immediately
+    // Deduct full amount from seller balance
     const newBalance = Number(profile.balance) - amount;
     await supabaseClient
       .from("profiles")
       .update({ balance: newBalance })
       .eq("id", user.id);
 
-    // Create transaction record
+    // Add fee to admin balance if admin exists
+    if (adminRole?.user_id) {
+      const { data: adminProfile } = await supabaseClient
+        .from("profiles")
+        .select("balance")
+        .eq("id", adminRole.user_id)
+        .single();
+
+      if (adminProfile) {
+        const newAdminBalance = Number(adminProfile.balance) + adminFee;
+        await supabaseClient
+          .from("profiles")
+          .update({ balance: newAdminBalance })
+          .eq("id", adminRole.user_id);
+
+        // Record admin fee transaction
+        await supabaseClient.from("transactions").insert({
+          user_id: adminRole.user_id,
+          type: "fee",
+          amount: adminFee,
+          description: `Taxa de saque (5%) - Seller ${seller.id}`,
+        });
+      }
+    }
+
+    // Create transaction record for seller
     await supabaseClient.from("transactions").insert({
       user_id: user.id,
       type: "withdrawal",
       amount: -amount,
-      description: `Solicitação de saque via PIX`,
+      description: `Solicitação de saque via PIX (Taxa: R$ ${adminFee.toFixed(2)})`,
     });
 
     // Try to create transfer in Asaas (admin will need to approve)
@@ -108,7 +145,7 @@ serve(async (req) => {
           "access_token": ASAAS_API_KEY,
         },
         body: JSON.stringify({
-          value: amount,
+          value: netAmount,
           pixAddressKey: pixKey,
           pixAddressKeyType: pixKeyType,
           description: `Saque - Seller ${seller.id}`,
