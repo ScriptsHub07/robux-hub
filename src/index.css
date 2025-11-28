@@ -1,0 +1,105 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Definition of the design system. All colors, gradients, fonts, etc should be defined here. 
+All colors MUST be HSL.
+*/
+
+@layer base {
+  :root {
+    /* Black and purple theme - inspired by modern marketplaces */
+    --background: 0 0% 4%;
+    --foreground: 0 0% 98%;
+
+    --card: 0 0% 6%;
+    --card-foreground: 0 0% 98%;
+
+    --popover: 0 0% 6%;
+    --popover-foreground: 0 0% 98%;
+
+    /* Primary: vibrant purple */
+    --primary: 270 91% 65%;
+    --primary-foreground: 0 0% 100%;
+
+    /* Secondary: darker purple */
+    --secondary: 270 70% 25%;
+    --secondary-foreground: 0 0% 98%;
+
+    --muted: 0 0% 12%;
+    --muted-foreground: 0 0% 60%;
+
+    /* Accent: purple with more saturation */
+    --accent: 270 80% 55%;
+    --accent-foreground: 0 0% 100%;
+
+    --destructive: 0 84% 60%;
+    --destructive-foreground: 0 0% 98%;
+
+    --border: 0 0% 15%;
+    --input: 0 0% 15%;
+    --ring: 270 91% 65%;
+
+    --radius: 0.75rem;
+
+    /* Custom semantic tokens */
+    --gradient-primary: linear-gradient(135deg, hsl(270 91% 65%), hsl(270 80% 55%));
+    --gradient-dark: linear-gradient(180deg, hsl(0 0% 6%), hsl(0 0% 4%));
+    --shadow-purple: 0 10px 40px -10px hsl(270 91% 65% / 0.4);
+    --shadow-glow: 0 0 60px hsl(270 91% 65% / 0.3);
+    
+    --sidebar-background: 0 0% 6%;
+    --sidebar-foreground: 0 0% 98%;
+    --sidebar-primary: 270 91% 65%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 0 0% 12%;
+    --sidebar-accent-foreground: 0 0% 98%;
+    --sidebar-border: 0 0% 15%;
+    --sidebar-ring: 270 91% 65%;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  body {
+    @apply bg-background text-foreground font-sans antialiased;
+  }
+
+  /* Smooth scrolling */
+  html {
+    scroll-behavior: smooth;
+  }
+}
+
+@layer utilities {
+  /* Gradient backgrounds */
+  .gradient-primary {
+    background: var(--gradient-primary);
+  }
+
+  .gradient-dark {
+    background: var(--gradient-dark);
+  }
+
+  /* Purple glow effects */
+  .glow-purple {
+    box-shadow: var(--shadow-glow);
+  }
+
+  .shadow-purple {
+    box-shadow: var(--shadow-purple);
+  }
+
+  /* Smooth transitions */
+  .transition-smooth {
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+
+  /* Hover scale effect */
+  .hover-scale {
+    @apply transition-smooth hover:scale-105;
+  }
+}
