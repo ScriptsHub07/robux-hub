@@ -10,6 +10,7 @@ import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Switch } from "@/components/ui/switch";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { WithdrawModal } from "@/components/WithdrawModal";
 import { 
   DollarSign, 
   Package, 
@@ -41,8 +42,20 @@ export default function SellerPanel() {
   const [minAmount, setMinAmount] = useState("");
   const [maxAmount, setMaxAmount] = useState("");
   const [isOnline, setIsOnline] = useState(false);
+  const [showWithdraw, setShowWithdraw] = useState(false);
+  const [balance, setBalance] = useState(0);
   const navigate = useNavigate();
   const { toast } = useToast();
+
+  const refreshBalance = async () => {
+    if (!user?.id) return;
+    const { data } = await supabase
+      .from("profiles")
+      .select("balance")
+      .eq("id", user.id)
+      .single();
+    if (data) setBalance(Number(data.balance));
+  };
 
   useEffect(() => {
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
@@ -91,6 +104,14 @@ export default function SellerPanel() {
       setMinAmount(sellerData.min_amount.toString());
       setMaxAmount(sellerData.max_amount.toString());
       setIsOnline(sellerData.is_online);
+
+      // Fetch user balance
+      const { data: profileData } = await supabase
+        .from("profiles")
+        .select("balance")
+        .eq("id", userId)
+        .single();
+      if (profileData) setBalance(Number(profileData.balance));
 
       // Fetch orders for this seller
       const { data: ordersData } = await supabase
@@ -417,22 +438,41 @@ export default function SellerPanel() {
                   Solicitar Saque
                 </CardTitle>
                 <CardDescription>
-                  Retire seus ganhos para sua conta bancária
+                  Retire seus ganhos para sua conta bancária via PIX
                 </CardDescription>
               </CardHeader>
-              <CardContent className="text-center py-12">
-                <Banknote className="w-12 h-12 mx-auto mb-4 text-muted-foreground" />
-                <p className="text-muted-foreground mb-4">
-                  Sistema de saques em breve
+              <CardContent className="text-center py-8">
+                <Banknote className="w-12 h-12 mx-auto mb-4 text-primary" />
+                <p className="text-2xl font-bold text-primary mb-2">
+                  R$ {balance.toFixed(2)}
                 </p>
-                <p className="text-sm text-muted-foreground">
-                  Saldo disponível: R$ {totalEarnings.toFixed(2)}
+                <p className="text-sm text-muted-foreground mb-6">
+                  Saldo disponível para saque
                 </p>
+                <Button 
+                  onClick={() => setShowWithdraw(true)}
+                  disabled={balance < 10}
+                >
+                  <Banknote className="w-4 h-4 mr-2" />
+                  Solicitar Saque
+                </Button>
+                {balance < 10 && (
+                  <p className="text-xs text-muted-foreground mt-2">
+                    Saldo mínimo para saque: R$ 10,00
+                  </p>
+                )}
               </CardContent>
             </Card>
           </TabsContent>
         </Tabs>
       </div>
+
+      <WithdrawModal
+        open={showWithdraw}
+        onOpenChange={setShowWithdraw}
+        onSuccess={refreshBalance}
+        maxAmount={balance}
+      />
     </div>
   );
 }

@@ -7,6 +7,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { AddBalanceModal } from "@/components/AddBalanceModal";
 import { 
   Wallet, 
   ShoppingBag, 
@@ -37,8 +38,19 @@ export default function Dashboard() {
   const [isSeller, setIsSeller] = useState(false);
   const [isAdmin, setIsAdmin] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [showAddBalance, setShowAddBalance] = useState(false);
   const navigate = useNavigate();
   const { toast } = useToast();
+
+  const refreshProfile = async () => {
+    if (!user?.id) return;
+    const { data } = await supabase
+      .from("profiles")
+      .select("*")
+      .eq("id", user.id)
+      .single();
+    if (data) setProfile(data);
+  };
 
   useEffect(() => {
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
@@ -168,7 +180,7 @@ export default function Dashboard() {
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <Button size="sm" className="w-full gap-2">
+              <Button size="sm" className="w-full gap-2" onClick={() => setShowAddBalance(true)}>
                 <Plus className="w-4 h-4" />
                 Adicionar Saldo
               </Button>
@@ -309,6 +321,12 @@ export default function Dashboard() {
           </TabsContent>
         </Tabs>
       </div>
+
+      <AddBalanceModal 
+        open={showAddBalance} 
+        onOpenChange={setShowAddBalance}
+        onSuccess={refreshProfile}
+      />
     </div>
   );
 }
